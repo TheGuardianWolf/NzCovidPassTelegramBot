@@ -42,7 +42,9 @@ namespace NzCovidPassTelegramBot.Repositories
 
             var data = JsonConvert.SerializeObject(poll);
 
-            await _store.SetStringAsync(_cachePrefix + poll.InlineMessageId, data);
+            var options = new DistributedCacheEntryOptions { SlidingExpiration = new TimeSpan(30, 0, 0, 0) };
+
+            await _store.SetStringAsync(_cachePrefix + poll.InlineMessageId, data, options);
         }
     }
 }
