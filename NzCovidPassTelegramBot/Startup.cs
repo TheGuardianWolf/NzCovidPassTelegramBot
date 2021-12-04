@@ -13,7 +13,6 @@ using Serilog;
 using System.Net.Mime;
 using System.Security.Authentication;
 using Telegram.Bot;
-using Tingle.Extensions.Caching.MongoDB;
 
 
 namespace NzCovidPassTelegramBot
@@ -59,15 +58,11 @@ namespace NzCovidPassTelegramBot
             var cosmosConfig = Configuration.GetConnectionString("Cosmos");
             if (!string.IsNullOrEmpty(cosmosConfig))
             {
-                services.AddMongoCache(options =>
+                services.AddCosmosCache(options =>
                 {
-                    var settings = MongoClientSettings.FromUrl(new MongoUrl(cosmosConfig));
-                    settings.SslSettings = new SslSettings() { EnabledSslProtocols = SslProtocols.Tls12 };
-                    var mongoClient = new MongoClient(settings);
-
-                    options.CollectionName = "DistributedCache";
                     options.DatabaseName = cacheInstanceName;
-                    options.MongoClient = mongoClient;
+                    options.ContainerName = "DistributedCache";
+                    options.ClientBuilder = new Microsoft.Azure.Cosmos.Fluent.CosmosClientBuilder(cosmosConfig);
                     options.CreateIfNotExists = true;
                 });
             }
