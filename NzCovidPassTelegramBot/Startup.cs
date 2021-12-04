@@ -56,7 +56,17 @@ namespace NzCovidPassTelegramBot
             // 3rd Party
             var redisConfig = Configuration.GetConnectionString("Redis");
             var cosmosConfig = Configuration.GetConnectionString("Cosmos");
-            if (!string.IsNullOrEmpty(cosmosConfig))
+            
+            if (!string.IsNullOrEmpty(redisConfig))
+            {
+                services.AddStackExchangeRedisCache(options =>
+                {
+                    options.InstanceName = cacheInstanceName;
+                    options.ConfigurationOptions = StackExchange.Redis.ConfigurationOptions.Parse(redisConfig);
+                    options.ConfigurationOptions.CertificateValidation += ConfigurationOptions_CertificateValidation;
+                });
+            }
+            else if (!string.IsNullOrEmpty(cosmosConfig))
             {
                 services.AddCosmosCache(options =>
                 {
@@ -64,15 +74,6 @@ namespace NzCovidPassTelegramBot
                     options.ContainerName = "DistributedCache";
                     options.ClientBuilder = new Microsoft.Azure.Cosmos.Fluent.CosmosClientBuilder(cosmosConfig);
                     options.CreateIfNotExists = true;
-                });
-            }
-            else if (!string.IsNullOrEmpty(redisConfig))
-            {
-                services.AddStackExchangeRedisCache(options =>
-                {
-                    options.InstanceName = cacheInstanceName;
-                    options.ConfigurationOptions = StackExchange.Redis.ConfigurationOptions.Parse(redisConfig);
-                    options.ConfigurationOptions.CertificateValidation += ConfigurationOptions_CertificateValidation;
                 });
             }
             else
