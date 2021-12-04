@@ -1,0 +1,18 @@
+﻿@page "/"
+
+<PageTitle>NZ Covid Pass Linker Bot</PageTitle>
+
+<h1>NZ Covid Pass Linker Bot</h1>
+
+<p>This is a telegram bot made to store and verify a user' self submitted COVID vaccination status. It uses the COVID pass as the main proof of vaccination.</p>
+
+<p>COVID passes when created are stored in the Ministry of Health's systems. To verify it, the MoH issues a digital signature that takes the form of a QR code.
+    If a QR code is submitted to this bot, it is verified via the MoH system and if valid, will mark the submitting Telegram account as valid (with an expiry date).
+    Only one Telegram account can have one unique pass at any given time.</p>
+
+@*<p>For administrative purposes, the bot will ask for an email or phone number. A hash of this information will be stored so that you may revoke a link if the Telegram account is lost or stolen.</p>*@
+
+<p>No sensitive information will be directly stored by this service at the current time, hashes will be used in all places where it can. In the future (if there is the need), the bot may explicitly ask for further data that may identify you.
+    During verification, your pass will transit through this server, but the data is not kept.</p>
+
+<p>This service and website is running under the ownership of <a href="https://t.me/theguardianwolf" target="tgw">@@TheGuardianWolf</a>.</p>
