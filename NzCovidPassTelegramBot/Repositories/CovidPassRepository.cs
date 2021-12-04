@@ -67,7 +67,7 @@ namespace NzCovidPassTelegramBot.Repositories
 
             var data = JsonConvert.SerializeObject(pass);
 
-            var options = new DistributedCacheEntryOptions { AbsoluteExpiration = pass.VaidToDate };
+            var options = new DistributedCacheEntryOptions { AbsoluteExpiration = pass.ValidToDate };
 
             await Task.WhenAll(
                 _store.SetStringAsync(_cachePrefix + pass.UserId.ToString(), data, options),

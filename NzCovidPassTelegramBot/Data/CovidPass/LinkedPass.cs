@@ -9,7 +9,7 @@ namespace NzCovidPassTelegramBot.Data.CovidPass
     {
         public long UserId { get; set; }
         public PassIdentifier PassIdentifier { get; set; }
-        public DateTime VaidToDate { get; set; }
+        public DateTime ValidToDate { get; set; }
         public DateTime ValidFromDate { get; set; }
         public IEnumerable<long> Verifiers { get; set; } = new long[] { };
 
@@ -17,13 +17,13 @@ namespace NzCovidPassTelegramBot.Data.CovidPass
         {
             UserId = userId;
             PassIdentifier = passIdentifier;
-            VaidToDate = validToDate;
+            ValidToDate = validToDate;
             ValidFromDate = validFromDate;
         }
 
         public bool BetweenValidDates()
         {
-            return DateTime.UtcNow < VaidToDate && DateTime.UtcNow >= ValidFromDate;
+            return DateTime.UtcNow < ValidToDate && DateTime.UtcNow >= ValidFromDate;
         }
 
         public string GenerateCode()
