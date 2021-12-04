@@ -1,5 +1,9 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver;
 using NzCovidPass.Core.Shared;
 using NzCovidPassTelegramBot.Data.Shared;
 using NzCovidPassTelegramBot.Repositories;
@@ -7,7 +11,9 @@ using NzCovidPassTelegramBot.Services;
 using NzCovidPassTelegramBot.Services.Hosted;
 using Serilog;
 using System.Net.Mime;
+using System.Security.Authentication;
 using Telegram.Bot;
+using Tingle.Extensions.Caching.MongoDB;
 
 
 namespace NzCovidPassTelegramBot
@@ -21,15 +27,15 @@ namespace NzCovidPassTelegramBot
         {
             Environment = env;
             Configuration = configuration;
-//#pragma warning disable CS0618 // Type or member is obsolete
-//            BsonDefaults.GuidRepresentationMode = GuidRepresentationMode.V3;
-//#pragma warning restore CS0618 // Type or member is obsolete
-//            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+#pragma warning disable CS0618 // Type or member is obsolete
+            BsonDefaults.GuidRepresentationMode = GuidRepresentationMode.V3;
+#pragma warning restore CS0618 // Type or member is obsolete
+            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
         }
 
         public void ConfigureServices(IServiceCollection services)
         {
-
+            var cacheInstanceName = Configuration["CacheInstanceName"];
             var telegramConfig = Configuration.GetSection("Telegram").Get<TelegramConfiguration>();
 
             // Add services to the container.
@@ -49,13 +55,28 @@ namespace NzCovidPassTelegramBot
             services.AddScoped<ICovidPassPollService, CovidPassPollService>();
 
             // 3rd Party
-            var hasRedisConfig = !string.IsNullOrEmpty(Configuration.GetConnectionString("Cache"));
-            if (hasRedisConfig)
+            var redisConfig = Configuration.GetConnectionString("Redis");
+            var cosmosConfig = Configuration.GetConnectionString("Cosmos");
+            if (!string.IsNullOrEmpty(cosmosConfig))
+            {
+                services.AddMongoCache(options =>
+                {
+                    var settings = MongoClientSettings.FromUrl(new MongoUrl(cosmosConfig));
+                    settings.SslSettings = new SslSettings() { EnabledSslProtocols = SslProtocols.Tls12 };
+                    var mongoClient = new MongoClient(settings);
+
+                    options.CollectionName = "DistributedCache";
+                    options.DatabaseName = cacheInstanceName;
+                    options.MongoClient = mongoClient;
+                    options.CreateIfNotExists = true;
+                });
+            }
+            else if (!string.IsNullOrEmpty(redisConfig))
             {
                 services.AddStackExchangeRedisCache(options =>
                 {
-                    options.InstanceName = typeof(Program).FullName;
-                    options.ConfigurationOptions = StackExchange.Redis.ConfigurationOptions.Parse(Configuration.GetConnectionString("Cache"));
+                    options.InstanceName = cacheInstanceName;
+                    options.ConfigurationOptions = StackExchange.Redis.ConfigurationOptions.Parse(redisConfig);
                     options.ConfigurationOptions.CertificateValidation += ConfigurationOptions_CertificateValidation;
                 });
             }

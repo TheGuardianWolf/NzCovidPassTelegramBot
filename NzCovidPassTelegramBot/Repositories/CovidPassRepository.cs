@@ -58,6 +58,13 @@ namespace NzCovidPassTelegramBot.Repositories
         {
             _logger.LogTrace("Updating pass for {userId}", pass.UserId);
 
+            var previousPass = await Get(pass.UserId);
+            if (previousPass is not null)
+            {
+                // Remove previous pass first
+                await Remove(previousPass.UserId);
+            }
+
             var data = JsonConvert.SerializeObject(pass);
 
             var options = new DistributedCacheEntryOptions { AbsoluteExpiration = pass.VaidToDate };
