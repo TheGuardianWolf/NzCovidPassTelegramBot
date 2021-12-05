@@ -7,6 +7,7 @@ using MongoDB.Driver;
 using NzCovidPass.Core.Shared;
 using NzCovidPassTelegramBot.Data.Shared;
 using NzCovidPassTelegramBot.Repositories;
+using NzCovidPassTelegramBot.Repositories.DataSources;
 using NzCovidPassTelegramBot.Services;
 using NzCovidPassTelegramBot.Services.Hosted;
 using Serilog;
@@ -34,7 +35,7 @@ namespace NzCovidPassTelegramBot
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var cacheInstanceName = Configuration["CacheInstanceName"];
+            var dataInstanceName = Configuration["DataInstanceName"];
             var telegramConfig = Configuration.GetSection("Telegram").Get<TelegramConfiguration>();
 
             // Add services to the container.
@@ -53,7 +54,7 @@ namespace NzCovidPassTelegramBot
             services.AddScoped<ICovidPassLinkerService, CovidPassLinkerService>();
             services.AddScoped<ICovidPassPollService, CovidPassPollService>();
 
-            // 3rd Party
+            // Caching solution for polls and passes
             var redisConfig = Configuration.GetConnectionString("Redis");
             var cosmosConfig = Configuration.GetConnectionString("Cosmos");
             
@@ -61,7 +62,7 @@ namespace NzCovidPassTelegramBot
             {
                 services.AddStackExchangeRedisCache(options =>
                 {
-                    options.InstanceName = cacheInstanceName;
+                    options.InstanceName = dataInstanceName;
                     options.ConfigurationOptions = StackExchange.Redis.ConfigurationOptions.Parse(redisConfig);
                     options.ConfigurationOptions.CertificateValidation += ConfigurationOptions_CertificateValidation;
                 });
@@ -70,7 +71,7 @@ namespace NzCovidPassTelegramBot
             {
                 services.AddCosmosCache(options =>
                 {
-                    options.DatabaseName = cacheInstanceName;
+                    options.DatabaseName = dataInstanceName;
                     options.ContainerName = "DistributedCache";
                     options.ClientBuilder = new Microsoft.Azure.Cosmos.Fluent.CosmosClientBuilder(cosmosConfig);
                     options.CreateIfNotExists = true;
@@ -81,14 +82,20 @@ namespace NzCovidPassTelegramBot
                 services.AddDistributedMemoryCache();
             }
 
+            var mongoConfig = Configuration.GetConnectionString("Mongo");
+            // For everything else.. there's mongo
+            services.AddSingleton<IMongoDataSource, MongoDataSource>(sc =>
+            {
+                return new MongoDataSource(mongoConfig, dataInstanceName);
+            });
+
+            // Other 3rd party stuff
             services.AddNzCovidPassVerifier();
             services.AddMemoryCache(); // Needed for covid pass
             services.AddHttpClient("tgwebhook")
                    .AddTypedClient<ITelegramBotClient>(httpClient => new TelegramBotClient(telegramConfig.BotToken, httpClient));
 
             services.AddControllers().AddNewtonsoftJson();
-
-
         }
 
         private bool ConfigurationOptions_CertificateValidation(object sender, System.Security.Cryptography.X509Certificates.X509Certificate? certificate, System.Security.Cryptography.X509Certificates.X509Chain? chain, System.Net.Security.SslPolicyErrors sslPolicyErrors)
