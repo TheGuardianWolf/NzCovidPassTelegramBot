@@ -9,6 +9,7 @@ using NzCovidPassTelegramBot.Data.Shared;
 using NzCovidPassTelegramBot.Repositories;
 using NzCovidPassTelegramBot.Repositories.DataSources;
 using NzCovidPassTelegramBot.Services;
+using NzCovidPassTelegramBot.Services.Bot;
 using NzCovidPassTelegramBot.Services.Hosted;
 using Serilog;
 using System.Net.Mime;
@@ -51,6 +52,7 @@ namespace NzCovidPassTelegramBot
             services.AddSingleton<ICovidPassRepository, CovidPassRepository>();
 
             services.AddScoped<ITelegramBotService, TelegramBotService>();
+            services.AddBotCortex();
             services.AddScoped<ICovidPassLinkerService, CovidPassLinkerService>();
             services.AddScoped<ICovidPassPollService, CovidPassPollService>();
 
