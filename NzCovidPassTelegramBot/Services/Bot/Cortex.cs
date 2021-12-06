@@ -8,17 +8,19 @@ namespace NzCovidPassTelegramBot.Services.Bot
     {
         private readonly ILogger _logger;
         private readonly IEnumerable<IBotUpdateModule> _coreModules;
+        private readonly IEnumerable<IBotMetaUpdateModule> _metaModules;
 
-        public Cortex(ILogger<Cortex> logger, IEnumerable<IBotUpdateModule> coreModules)
+        public Cortex(ILogger<Cortex> logger, IEnumerable<IBotUpdateModule> coreModules, IEnumerable<IBotMetaUpdateModule> metaModule)
         {
             _logger = logger;
             _coreModules = coreModules;
+            _metaModules = metaModule;
         }
 
         public async Task Process(Update update)
         {
             var handled = false;
-            foreach (var module in _coreModules)
+            foreach (var module in _coreModules.Concat(_metaModules))
             {
                 try
                 {
@@ -67,7 +69,7 @@ namespace NzCovidPassTelegramBot.Services.Bot
             services.AddTransient<IBotUpdateModule, LinkModule>();
             services.AddTransient<IBotUpdateModule, HelpModule>();
             services.AddTransient<IBotUpdateModule, NotariseModule>();
-            services.AddTransient<IBotUpdateModule, InlineQueryResultCollectorModule>();
+            services.AddTransient<IBotMetaUpdateModule, InlineQueryResultCollectorModule>();
 
             return services;
         }

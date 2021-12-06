@@ -5,7 +5,7 @@ using Telegram.Bot.Types.InlineQueryResults;
 
 namespace NzCovidPassTelegramBot.Services.Bot.Modules
 {
-    public class InlineQueryResultCollectorModule : IBotUpdateModule
+    public class InlineQueryResultCollectorModule : IBotMetaUpdateModule
     {
         private readonly IEnumerable<IBotInlineQueryReceiver> _inlineQueryReceivers;
         private readonly ITelegramBotClient _client;

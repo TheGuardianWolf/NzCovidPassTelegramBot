@@ -6,4 +6,8 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
     {
         public Task<bool> Process(Update update);
     }
+
+    public interface IBotMetaUpdateModule : IBotUpdateModule
+    {
+    }
 }
