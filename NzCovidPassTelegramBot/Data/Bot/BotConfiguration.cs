@@ -2,6 +2,6 @@
 {
     public class BotConfiguration
     {
-        public IEnumerable<User> Users { get; set; } = new List<User>();
+        public User[] Users { get; set; } = new User[] { };
     }
 }

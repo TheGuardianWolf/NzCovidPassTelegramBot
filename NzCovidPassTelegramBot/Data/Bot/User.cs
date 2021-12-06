@@ -12,8 +12,7 @@ namespace NzCovidPassTelegramBot.Data.Bot
     public class User
     {
         public long UserId { get; set; }
-        [JsonProperty(ItemConverterType=typeof(StringEnumConverter))]
-        public IEnumerable<UserClaim> UserClaims { get; set; } = new List<UserClaim>();
+        public UserClaim[] UserClaims { get; set; } = new UserClaim[] { };
 
         public bool HasClaim(UserClaim testClaim)
         {

@@ -20,7 +20,7 @@ Members valid: {3}.";
 
 This will show up on checks and provide an extra level of verification.
 
-You should only mark individuals that have presented photo id and their vaccine passport. Abuse of this system will remove your status.
+You should only mark individuals that have presented photo id and their vaccine passport. Abuse of this system will cause your status to be removed.
 
 Please forward a message from the account to notarise. You may also remove their notarised status through this method.";
     }

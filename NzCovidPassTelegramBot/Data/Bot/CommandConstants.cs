@@ -20,7 +20,7 @@
 
         public static readonly CommandInfo[] NotaryInfo =
         {
-            new CommandInfo(Notarise, "Notarise / vouch for a linked covid pass with your account")
+            new CommandInfo(Notarise, "vouch for a linked covid pass with your account")
         };
     }
 }
