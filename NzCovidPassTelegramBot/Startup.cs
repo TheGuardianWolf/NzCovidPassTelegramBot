@@ -5,7 +5,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using NzCovidPass.Core.Shared;
-using NzCovidPassTelegramBot.Data.Shared;
+using NzCovidPassTelegramBot.Data.Bot;
 using NzCovidPassTelegramBot.Repositories;
 using NzCovidPassTelegramBot.Repositories.DataSources;
 using NzCovidPassTelegramBot.Services;
@@ -38,6 +38,7 @@ namespace NzCovidPassTelegramBot
         {
             var dataInstanceName = Configuration["DataInstanceName"];
             var telegramConfig = Configuration.GetSection("Telegram").Get<TelegramConfiguration>();
+            var botConfig = Configuration.GetSection("Bot").Get<BotConfiguration>();
 
             // Add services to the container.
             services.AddRazorPages(options =>
@@ -50,11 +51,13 @@ namespace NzCovidPassTelegramBot
             services.AddHostedService<ConfigureTelegramWebhookHostedService>();
             services.AddSingleton<IInlineMessagePollRepository, InlineMessagePollRepository>();
             services.AddSingleton<ICovidPassRepository, CovidPassRepository>();
+            services.AddSingleton<IUserRepository, UserRepository>();
 
             services.AddScoped<ITelegramBotService, TelegramBotService>();
             services.AddBotCortex();
             services.AddScoped<ICovidPassLinkerService, CovidPassLinkerService>();
             services.AddScoped<ICovidPassPollService, CovidPassPollService>();
+            services.AddScoped<IUserService, UserService>();
 
             // Caching solution for polls and passes
             var redisConfig = Configuration.GetConnectionString("Redis");

@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using NzCovidPassTelegramBot.Data.Shared;
+using NzCovidPassTelegramBot.Data.Bot;
 using NzCovidPassTelegramBot.Services;
 using Telegram.Bot.Types;
 

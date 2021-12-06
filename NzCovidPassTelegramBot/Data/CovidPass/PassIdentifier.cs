@@ -25,7 +25,7 @@ namespace NzCovidPassTelegramBot.Data.CovidPass
 
         private string HashId(string id)
         {
-            return Convert.ToHexString(SHA384.HashData(Encoding.UTF8.GetBytes(id)));
+            return Convert.ToBase64String(SHA384.HashData(Encoding.UTF8.GetBytes(id)));
         }
 
         public bool Verify(string id)

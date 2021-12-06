@@ -1,5 +1,5 @@
 [Tt]mp/
-*.development.json
+appsettings.*.json
 
 .vscode/*
 !.vscode/settings.json

@@ -1,4 +1,4 @@
-﻿using NzCovidPassTelegramBot.Data.Shared;
+﻿using NzCovidPassTelegramBot.Data.Bot;
 using NzCovidPassTelegramBot.Data.Templates;
 using NzCovidPassTelegramBot.Services;
 using Telegram.Bot;
@@ -36,6 +36,11 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
 
         private async Task<bool> BotOnMessageReceived(Message message)
         {
+            if (message.Chat.Type != ChatType.Private)
+            {
+                return false;
+            }
+
             if (message.Type == MessageType.Text)
             {
                 switch (message.Text!.Split(' ')[0])
@@ -95,7 +100,10 @@ There is nothing to revoke!";
 
         public async Task<bool> BotOnCallbackQueryReceived(CallbackQuery callbackQuery)
         {
-            _logger.LogInformation("Receive callback query data: {callbackData}", callbackQuery.Data);
+            if (callbackQuery.Message?.Chat.Type != ChatType.Private)
+            {
+                return false;
+            }
 
             switch (callbackQuery.Data)
             {

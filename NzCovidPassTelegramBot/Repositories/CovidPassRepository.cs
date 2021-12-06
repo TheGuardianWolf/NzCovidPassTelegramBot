@@ -63,6 +63,12 @@ namespace NzCovidPassTelegramBot.Repositories
             {
                 // Remove previous pass first
                 await Remove(previousPass.UserId);
+
+                // Track linkdate if same pass
+                if (previousPass.PassIdentifier == pass.PassIdentifier)
+                {
+                    pass.LinkDate = previousPass.LinkDate;
+                }
             }
 
             var data = JsonConvert.SerializeObject(pass);

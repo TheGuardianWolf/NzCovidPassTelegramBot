@@ -1,4 +1,4 @@
-﻿namespace NzCovidPassTelegramBot.Data.Shared
+﻿namespace NzCovidPassTelegramBot.Data.Bot
 {
     public class CommandInfo
     {

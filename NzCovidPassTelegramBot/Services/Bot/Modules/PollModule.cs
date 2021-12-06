@@ -1,5 +1,5 @@
-﻿using NzCovidPassTelegramBot.Data.Poll;
-using NzCovidPassTelegramBot.Data.Shared;
+﻿using NzCovidPassTelegramBot.Data.Bot;
+using NzCovidPassTelegramBot.Data.Poll;
 using NzCovidPassTelegramBot.Data.Templates;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -9,18 +9,20 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace NzCovidPassTelegramBot.Services.Bot.Modules
 {
-    public class PollModule : IBotUpdateModule
+    public class PollModule : IBotUpdateModule, IBotInlineQueryReceiver
     {
         private readonly ILogger _logger;
         private readonly ITelegramBotClient _client;
         private readonly ICovidPassPollService _covidPassPollService;
+        private readonly ICovidPassLinkerService _covidPassLinkerService;
         private readonly TelegramConfiguration _tgConfig;
 
-        public PollModule(IConfiguration configuration, ITelegramBotClient client, ICovidPassPollService covidPassPollService, ILogger<PollModule> logger)
+        public PollModule(IConfiguration configuration, ITelegramBotClient client, ICovidPassLinkerService covidPassLinkerService, ICovidPassPollService covidPassPollService, ILogger<PollModule> logger)
         {
             _logger = logger;
             _client = client;
             _covidPassPollService = covidPassPollService;
+            _covidPassLinkerService = covidPassLinkerService;
             _tgConfig = configuration.GetSection("Telegram").Get<TelegramConfiguration>();
         }
 
@@ -30,10 +32,10 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
             {
                 case UpdateType.Message:
                     return await BotOnMessageReceived(update.Message!);
-                case UpdateType.InlineQuery:
-                    return await BotOnInlineQueryReceived(update.InlineQuery!);
                 case UpdateType.ChosenInlineResult:
                     return await BotOnChosenInlineResultReceived(update.ChosenInlineResult!);
+                case UpdateType.CallbackQuery:
+                    return await BotOnCallbackQueryReceived(update.CallbackQuery!);
             };
 
             return false;
@@ -41,6 +43,11 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
 
         private async Task<bool> BotOnMessageReceived(Message message)
         {
+            if (message.Chat.Type != ChatType.Private)
+            {
+                return false;
+            }
+
             if (message.Type == MessageType.Text)
             {
                 switch (message.Text!.Split(' ')[0])
@@ -54,10 +61,8 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
             return false;
         }
 
-        private async Task<bool> BotOnInlineQueryReceived(InlineQuery inlineQuery)
+        public async Task<IEnumerable<InlineQueryResult>> BotOnInlineQueryReceived(InlineQuery inlineQuery)
         {
-            _logger.LogInformation("Received inline query from: {inlineQueryFromId}", inlineQuery.From.Id);
-
             var text = new InputTextMessageContent(
                         string.Format(BotText.CovidPassCheck, DateTime.UtcNow.ToString("d"), inlineQuery.From.Username, _tgConfig.BotUsername, "No valid responses").Replace(".", "\\.").Replace("-", "\\-")
                     );
@@ -80,16 +85,11 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
                 response
             };
 
-            await _client.AnswerInlineQueryAsync(inlineQueryId: inlineQuery.Id,
-                                                    results: results,
-                                                    cacheTime: 0);
-            return true;
+            return await Task.FromResult(results);
         }
 
         private async Task<bool> BotOnChosenInlineResultReceived(ChosenInlineResult chosenInlineResult)
         {
-            _logger.LogInformation("Received inline result: {chosenInlineResultId}", chosenInlineResult.ResultId);
-
             switch (chosenInlineResult.ResultId)
             {
                 case "/startcheckin":
@@ -100,29 +100,6 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
             return false;
         }
 
-        public async Task Check(Message message)
-        {
-            // Send convert to inline, then proceed with inline options
-            const string checkTemplate = @"Click the button below to request a group or user's vaccine pass link status\(es\).
-
-This bot can be called inline with `@{0}` in any private or group chats to initiate a poll.
-
-This will prompt users to volunteer their Covid pass statuses.";
-
-            var confirmKeyboard = new InlineKeyboardMarkup(new[]
-            {
-                new []
-                {
-                    InlineKeyboardButton.WithSwitchInlineQuery("Check Covid pass status"),
-                }
-             });
-
-            await _client.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                text: string.Format(checkTemplate,
-                                                    _tgConfig.BotUsername).Replace(".", "\\."),
-                                                parseMode: ParseMode.MarkdownV2,
-                                                replyMarkup: confirmKeyboard);
-        }
 
         private async Task CreatePollForCheckIn(ChosenInlineResult chosenInlineResult)
         {
@@ -161,6 +138,93 @@ This will prompt users to volunteer their Covid pass statuses.";
                 ).Replace(".", "\\.").Replace("-", "\\-"),
                 parseMode: ParseMode.MarkdownV2,
                 replyMarkup: markup);
+        }
+
+        private async Task<bool> BotOnCallbackQueryReceived(CallbackQuery callbackQuery)
+        {
+            switch (callbackQuery.Data)
+            {
+                case "/checkin":
+                    await CheckIn(callbackQuery);
+                    return true;
+            }
+
+            return false;
+        }
+
+        public async Task Check(Message message)
+        {
+            // Send convert to inline, then proceed with inline options
+            const string checkTemplate = @"Click the button below to request a group or user's vaccine pass link status\(es\).
+
+This bot can be called inline with `@{0}` in any private or group chats to initiate a poll.
+
+This will prompt users to volunteer their Covid pass statuses.";
+
+            var confirmKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                new []
+                {
+                    InlineKeyboardButton.WithSwitchInlineQuery("Check Covid pass status"),
+                }
+             });
+
+            await _client.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                text: string.Format(checkTemplate,
+                                                    _tgConfig.BotUsername).Replace(".", "\\."),
+                                                parseMode: ParseMode.MarkdownV2,
+                                                replyMarkup: confirmKeyboard);
+        }
+
+        public async Task CheckIn(CallbackQuery callbackQuery)
+        {
+            static async Task FailedCheckIn(ITelegramBotClient client, CallbackQuery callbackQuery)
+            {
+                await client.AnswerCallbackQueryAsync(
+                           callbackQueryId: callbackQuery.Id,
+                           text: "An error has occured :(");
+            }
+
+            if (callbackQuery.InlineMessageId is null)
+            {
+                await FailedCheckIn(_client, callbackQuery);
+                return;
+            }
+
+            var isUserLinked = await _covidPassLinkerService.IsUserLinked(callbackQuery.From.Id);
+
+            // Check if sender is verified
+            if (isUserLinked)
+            {
+                // Create check existing poll
+                var poll = _covidPassPollService.GetPoll(callbackQuery.InlineMessageId);
+
+                if (poll is null)
+                {
+                    await FailedCheckIn(_client, callbackQuery);
+                    return;
+                }
+
+                var updatedPoll = await _covidPassPollService.AddParticipantToPoll(callbackQuery.InlineMessageId, callbackQuery.From.Id, callbackQuery.From.Username ?? "");
+
+                if (updatedPoll is null)
+                {
+                    await FailedCheckIn(_client, callbackQuery);
+                    return;
+                }
+
+                await _client.AnswerCallbackQueryAsync(
+                    callbackQueryId: callbackQuery.Id,
+                    text: "You have checked in!");
+
+                await SyncPassPollInfoWithMessage(updatedPoll);
+            }
+            else
+            {
+                await _client.AnswerCallbackQueryAsync(
+                    callbackQueryId: callbackQuery.Id,
+                    text: $"Your account is not linked to a Covid pass, please message @{_tgConfig.BotUsername} to link.");
+            }
         }
     }
 }

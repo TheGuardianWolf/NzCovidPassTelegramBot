@@ -9,6 +9,7 @@ namespace NzCovidPassTelegramBot.Data.CovidPass
     {
         public long UserId { get; set; }
         public PassIdentifier PassIdentifier { get; set; }
+        public DateTime LinkDate { get; set; } = DateTime.UtcNow;
         public DateTime ValidToDate { get; set; }
         public DateTime ValidFromDate { get; set; }
         public IEnumerable<long> Verifiers { get; set; } = new long[] { };

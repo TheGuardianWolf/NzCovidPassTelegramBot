@@ -66,6 +66,8 @@ namespace NzCovidPassTelegramBot.Services.Bot
             services.AddTransient<IBotUpdateModule, PollModule>();
             services.AddTransient<IBotUpdateModule, LinkModule>();
             services.AddTransient<IBotUpdateModule, HelpModule>();
+            services.AddTransient<IBotUpdateModule, NotariseModule>();
+            services.AddTransient<IBotUpdateModule, InlineQueryResultCollectorModule>();
 
             return services;
         }

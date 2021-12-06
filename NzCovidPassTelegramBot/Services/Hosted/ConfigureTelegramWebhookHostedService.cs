@@ -1,4 +1,4 @@
-﻿using NzCovidPassTelegramBot.Data.Shared;
+﻿using NzCovidPassTelegramBot.Data.Bot;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
 

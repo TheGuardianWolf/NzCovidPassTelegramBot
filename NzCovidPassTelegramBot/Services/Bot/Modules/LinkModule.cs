@@ -1,5 +1,5 @@
-﻿using NzCovidPassTelegramBot.Data.CovidPass;
-using NzCovidPassTelegramBot.Data.Shared;
+﻿using NzCovidPassTelegramBot.Data.Bot;
+using NzCovidPassTelegramBot.Data.CovidPass;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Text.RegularExpressions;
@@ -39,6 +39,11 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
 
         private async Task<bool> BotOnMessageReceived(Message message)
         {
+            if (message.Chat.Type != ChatType.Private)
+            {
+                return false;
+            }
+
             if (message.Type == MessageType.Text)
             {
                 switch (message.Text!.Split(' ')[0])
@@ -58,6 +63,11 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
 
         private async Task<bool> LinkPhoto(Message message)
         {
+            if (message.Chat.Type != ChatType.Private)
+            {
+                return false;
+            }
+
             // Handle images as Covid Pass QR
             // Requred: Not forwarded from different user
             if (message.From is not null && (message.ForwardFrom is null || message.ForwardFrom?.Id == message.From.Id))
@@ -71,7 +81,10 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
 
         public async Task<bool> BotOnCallbackQueryReceived(CallbackQuery callbackQuery)
         {
-            _logger.LogInformation("Receive callback query data: {callbackData}", callbackQuery.Data);
+            if (callbackQuery.Message?.Chat.Type != ChatType.Private)
+            {
+                return false;
+            }
 
             switch (callbackQuery.Data)
             {
