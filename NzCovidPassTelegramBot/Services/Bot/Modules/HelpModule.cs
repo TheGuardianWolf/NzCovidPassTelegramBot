@@ -72,7 +72,7 @@ Usage:
                 }
              }
 
-            var usage = string.Format(usageFormatString, _tgConfig.Hostname) + string.Join('\n', CommandType.Info.Select(x => $"{x.Command} - {x.Description}"));
+            var usage = string.Format(usageFormatString, _tgConfig.Hostname) + string.Join('\n', userCommandInfo.Select(x => $"{x.Command} - {x.Description}"));
 
             await _client.SendTextMessageAsync(chatId: message.Chat.Id,
                                                   text: usage,
