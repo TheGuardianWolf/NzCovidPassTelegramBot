@@ -1,18 +1,101 @@
 ﻿@page "/"
+@using NzCovidPassTelegramBot.Data.Bot
 
 <PageTitle>Vaxxy</PageTitle>
 
 <h1>Vaxxy</h1>
 
-<p>This is a telegram bot made to store and verify a user' self submitted COVID vaccination status. It uses the COVID pass as the main proof of vaccination.</p>
+<div class="my-4 d-flex">
+    <a class="d-flex align-items-center text-decoration-none" href="https://t.me/NZCovidPassLinkBot" rel="noreferrer" target="_blank">
+        <div class="rounded-circle overflow-hidden me-2" style="height:54px;width:54px">
+            <img class="h-100 w-100" src="/assets/logo-circle.svg" alt="bot pic" />
+        </div>
+        <div>
+            <div class="fs-5 fw-bold text-body">
+                Vaxxy
+            </div>
+            <div class="text-secondary">
+                @@@BotUsername
+            </div>
+        </div>        
+    </a>
+</div>
 
-<p>COVID passes when created are stored in the Ministry of Health's systems. To verify it, the MoH issues a digital signature that takes the form of a QR code.
+<p>A Telegram bot designed to provide proof of vaccination in NZ without revealing personal details.</p>
+
+<h3>Data Collection</h3>
+
+<p>Due to how pass verification works, your pass will need to be sighted by the bot to be verified. However, only the following information is stored in the bot's systems.</p>
+
+<p>The following information is stored through the linking process:</p>
+
+<ul>
+    <li>Telegram User ID</li>
+    <li>SHA-384 Hash of Covid Pass ID</li>
+    <li>Covid Pass "Valid From" Date</li>
+    <li>Covid Pass "Valid To" Date</li>
+</ul>
+
+<p>Retention time of this information is until the "Valid To" date.</p>
+
+<p>If you run a check, the following additional information is entered upon check-in:</p>
+
+<ul>
+    <li>Telegram Username</li>
+</ul>
+
+<p>Retention time for check polls are a sliding window 30 days from last use of the poll.</p>
+
+<p>No further information is stored unless you are a special user in the system (notary or admin).</p>
+
+<h3>About the Covid Pass</h3>
+
+<p>
+    NZ has implemented a <a href="https://covid19.govt.nz/covid-19-vaccines/covid-19-vaccination-certificates/my-vaccine-pass/" rel="noreferrer" target="_blank">Covid pass</a> for daily use and have made it mandatory for some businesses to enforce checks.
+    For private events, there are <a href="https://covid19.govt.nz/traffic-lights/covid-19-protection-framework/" rel="noreferrer" target="_blank">restrictions</a> on gatherings at certain restriction levels if passes are not used.
+    This bot was made to cover the latter use case.
+</p>
+
+<p>
+    It has been left up to event organisers to be responsible for checking passes during events, a process that can be awkward and invasive on personal details. To add to this, the pass does not uniquely identify the individual and requires
+    an additional photo ID check to confirm someone's identity.
+</p>
+
+<p>
+     This bot presents a solution that is trust based, and bridge the gap between photo ID verification in person and no verification at all. Using the bot systems to sight the pass means that no personal details are revealed to
+     event organisers where it is not needed. Additionally, the bot is built with a notary system that allows certain accounts to <em>notarise</em> a user's pass. This alongside a one-to-one pass linking system with Telegram accounts is 
+     designed to mitigate the duplication and thefts of Covid Passes that has been happening with current usage of the pass in the wild.
+</p>
+
+<h3>Technical Details</h3>
+
+<p>
+    The NZ government has decided to make the implementation details of the Covid Pass available for public viewing. This can be found <a href="https://nzcp.covid19.health.nz" rel="noreferrer" target="blank">here</a>.
+    This has proven to be quite extensible, and various individuals have contributed API libraries.
+</p>
+
+<p>
+    COVID passes, when created, are stored in the Ministry of Health's systems. To verify it, the MoH issues a digital signature that takes the form of a QR code.
     If a QR code is submitted to this bot, it is verified via the MoH system and if valid, will mark the submitting Telegram account as valid (with an expiry date).
-    Only one Telegram account can have one unique pass at any given time.</p>
+    Only one Telegram account can have one unique pass at any given time.
+</p>
 
-@*<p>For administrative purposes, the bot will ask for an email or phone number. A hash of this information will be stored so that you may revoke a link if the Telegram account is lost or stolen.</p>*@
-
-<p>No sensitive information will be directly stored by this service at the current time, hashes will be used in all places where it can. In the future (if there is the need), the bot may explicitly ask for further data that may identify you.
-    During verification, your pass will transit through this server, but the data is not kept.</p>
+<p>
+    This bot and web service is built on Microsoft's ASP.NET technology, utilising Blazor (SSR) in a NET 6 environment.
+</p>
 
 <Signature />
+
+@code {
+    [Inject]
+    IConfiguration? Configuration { get; set; }
+
+    string BotUsername { get; set; } = "";
+
+    protected override Task OnInitializedAsync()
+    {
+        var botConfig = Configuration!.GetSection("Telegram").Get<TelegramConfiguration>();
+        BotUsername = botConfig.BotUsername;
+        return base.OnInitializedAsync();
+    }
+}

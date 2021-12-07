@@ -15,7 +15,7 @@ namespace NzCovidPassTelegramBot.Services
         Task<bool> IsPassLinked(PassIdentifier passIdentifier);
         Task<bool> IsUserLinked(long userId);
         Task<bool> IsUserNotarised(long userId);
-        Task<IEnumerable<long>> FilterNotarisedUsers(IEnumerable<long> userIds)
+        Task<IEnumerable<long>> FilterNotarisedUsers(IEnumerable<long> userIds);
     }
 
     public class CovidPassLinkerService : ICovidPassLinkerService

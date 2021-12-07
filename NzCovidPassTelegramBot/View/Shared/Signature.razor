@@ -1,3 +1,19 @@
-﻿<div class="my-4">
-    <p>This service and website is running under the ownership of <a href="https://t.me/theguardianwolf" target="tgw">@@TheGuardianWolf</a>.</p>
+﻿@using NzCovidPassTelegramBot.Data.Bot
+
+<div class="my-4">
+    <p>This service and website is running under the ownership of <a href="https://t.me/@(AuthorUsername)" target="_blank">@@@(AuthorUsername)</a>.</p>
 </div>
+
+@code {
+    [Inject]
+    IConfiguration? Configuration { get; set; }
+
+    string AuthorUsername { get; set; } = "";
+
+    protected override Task OnInitializedAsync()
+    {
+        var botConfig = Configuration!.GetSection("Telegram").Get<TelegramConfiguration>();
+        AuthorUsername = botConfig.AuthorUsername;
+        return base.OnInitializedAsync();
+    }
+}
