@@ -1,4 +1,4 @@
-docker build -t nzpasslink:heroku -f Dockerfile.heroku .
-docker tag nzpasslink:heroku registry.heroku.com/nzpasslink/web
-docker push registry.heroku.com/nzpasslink/web
-heroku container:release web -a nzpasslink
+docker build -t vaxxybot:heroku -f Dockerfile.heroku .
+docker tag vaxxybot:heroku registry.heroku.com/vaxxybot/web
+docker push registry.heroku.com/vaxxybot/web
+heroku container:release web -a vaxxybot
