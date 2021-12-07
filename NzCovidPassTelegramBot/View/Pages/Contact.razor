@@ -1,5 +1,6 @@
 ﻿@page "/contact"
-@using BlazorCaptcha
+@using Texnomic.Blazor.hCaptcha
+@using Texnomic.Blazor.hCaptcha.Enums
 @using NzCovidPassTelegramBot.Data.Email
 @using NzCovidPassTelegramBot.Services
 
@@ -39,16 +40,10 @@
         </div>
 
         <div class="mb-3">
-            <label class="form-label" for="message">
+            <label class="form-label">
                 Captcha
             </label>
-            <div class="captcha d-flex align-items-center">
-                <Captcha @bind-CaptchaWord="@Captcha" CharNumber="@_captchaLength" />
-                <button class="refresh btn btn-refresh ms-1" type="button" @onclick="RegenerateCaptcha"></button>
-            </div>
-            <div class="mt-1">
-                <InputText style="width:170px" class="form-control" id="captcha" aria-label="captcha" @bind-Value="@ContactFormModel.Captcha" />
-            </div>
+            <HCaptcha Callback="hCaptchaCallback" Theme="Theme.Light"></HCaptcha>
         </div>
 
         <button class="btn btn-primary" type="submit" disabled="@MessageSending">Send</button>
@@ -80,9 +75,13 @@
 
     ContactForm ContactFormModel { get; set; } = new ContactForm();
 
+    bool IsCaptchaValid { get; set; }
+
+    void hCaptchaCallback(bool Result) => IsCaptchaValid = Result;
+
     void RegenerateCaptcha()
     {
-        Captcha = Tools.GetCaptchaWord(_captchaLength);
+        
     }
 
     bool CustomValidator()
@@ -91,16 +90,15 @@
 
         var errors = new Dictionary<string, List<string>>();
 
-        if (!Captcha.Equals(ContactFormModel.Captcha, StringComparison.OrdinalIgnoreCase))
+        if (!IsCaptchaValid)
         {
-            errors.Add(nameof(ContactFormModel.Captcha),
+            errors.Add("Captcha",
                 new() { "Captcha is not valid, please retry" });
         }
 
         if (errors.Any())
         {
             CustomValidation?.DisplayErrors(errors);
-            RegenerateCaptcha();
             return false;
         }
 
@@ -110,7 +108,6 @@
     void ClearForm()
     {
         ContactFormModel = new ContactForm();
-        RegenerateCaptcha();
     }
 
     async void HandleValidSubmit()

@@ -105,6 +105,7 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
         public async Task NotariseConfirmStep(Message message)
         {
             var targetUserId = message.ForwardFrom!.Id;
+            var targetUsername = message.ForwardFrom!.Username;
 
             var pass = (await _covidPassLinkerService.GetPass(targetUserId))!;
 
@@ -123,15 +124,17 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
             await _client.SendTextMessageAsync(chatId: message.Chat.Id,
                                                 text: string.Format(BotText.NotariseConfirm,
                                                     targetUserId,
+                                                    targetUsername,
                                                     TimeZoneInfo.ConvertTimeFromUtc(pass.ValidFromDate, Program.NZTime).ToString("d"),
                                                     TimeZoneInfo.ConvertTimeFromUtc(pass.ValidToDate, Program.NZTime).ToString("d")),
-                                                replyMarkup: confirmKeyboard);
+                                                    replyMarkup: confirmKeyboard);
         }
 
         public async Task NotariseRevokeStep(Message message)
         {
             var selfUserId = message.From!.Id;
             var targetUserId = message.ForwardFrom!.Id;
+            var targetUsername = message.ForwardFrom!.Username;
 
             var pass = (await _covidPassLinkerService.GetPass(targetUserId))!;
 
@@ -150,9 +153,10 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
             await _client.SendTextMessageAsync(chatId: message.Chat.Id,
                                                 text: string.Format(BotText.RevokeNotariseConfirm,
                                                     targetUserId,
+                                                    targetUsername,
                                                     TimeZoneInfo.ConvertTimeFromUtc(pass.ValidFromDate, Program.NZTime).ToString("d"),
                                                     TimeZoneInfo.ConvertTimeFromUtc(pass.ValidToDate, Program.NZTime).ToString("d")),
-                                                replyMarkup: confirmKeyboard);
+                                                    replyMarkup: confirmKeyboard);
         }
 
         public async Task<bool> BotOnCallbackQueryReceived(CallbackQuery callbackQuery)
@@ -214,7 +218,7 @@ Additional reason(s):
 
             await _client.SendChatActionAsync(callbackQuery.Message.Chat.Id, ChatAction.Typing);
 
-            var userIdRegexp = new Regex(@"^UserId: (.+)", RegexOptions.Multiline);
+            var userIdRegexp = new Regex(@"^User ID: (.+)", RegexOptions.Multiline);
             var match = userIdRegexp.Match(callbackQuery.Message.Text);
 
             if (!match.Success || match.Groups.Count < 2)
@@ -282,7 +286,7 @@ Additional reason(s):
 
             await _client.SendChatActionAsync(callbackQuery.Message.Chat.Id, ChatAction.Typing);
 
-            var userIdRegexp = new Regex(@"^UserId: (.+)", RegexOptions.Multiline);
+            var userIdRegexp = new Regex(@"^User ID: (.+)", RegexOptions.Multiline);
             var match = userIdRegexp.Match(callbackQuery.Message.Text);
 
             if (!match.Success || match.Groups.Count < 2)

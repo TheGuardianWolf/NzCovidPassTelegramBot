@@ -10,7 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BlazorCaptcha" Version="1.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.Cosmos" Version="1.1.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.0" />
@@ -21,9 +20,11 @@
     <PackageReference Include="SendGrid" Version="9.25.1" />
     <PackageReference Include="SendGrid.Extensions.DependencyInjection" Version="1.0.1" />
     <PackageReference Include="Serilog.AspNetCore" Version="4.1.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
     <PackageReference Include="Telegram.Bot" Version="17.0.0" />
+    <PackageReference Include="Texnomic.Blazor.hCaptcha" Version="0.1.1" />
     <PackageReference Include="ZXing.Net" Version="0.16.6" />
-    <PackageReference Include="ZXing.Net.Bindings.ImageSharp" Version="0.16.9-beta" />
+    <PackageReference Include="ZXing.Net.Bindings.ImageSharp" Version="0.16.10" />
   </ItemGroup>
 
   <ItemGroup>

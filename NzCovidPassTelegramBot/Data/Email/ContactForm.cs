@@ -19,6 +19,5 @@ namespace NzCovidPassTelegramBot.Data.Email
         public ContactRequestType Subject { get; set; }
         [Required]
         public string Message { get; set; } = "";
-        public string Captcha { get; set; } = "";
     }
 }

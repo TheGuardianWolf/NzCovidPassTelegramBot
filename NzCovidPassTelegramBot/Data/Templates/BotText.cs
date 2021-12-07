@@ -44,15 +44,15 @@ Unique link code: `{5}`
 
         public const string NotariseConfirm = @"Please confirm that you would like to notarise this user.
 
-UserId: {0}
-Username: {1}
+User ID: {0}
+Username: @{1}
 Pass valid from: {2}
 Pass valid to: {3}";
 
         public const string RevokeNotariseConfirm = @"Please confirm that you would like to revoke your notarisation for this user.
 
-UserId: {0}
-Username: {1}
+User ID: {0}
+Username: @{1}
 Pass valid from: {2}
 Pass valid to: {3}";
 

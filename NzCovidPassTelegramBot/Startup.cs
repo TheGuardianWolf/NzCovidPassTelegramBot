@@ -16,7 +16,8 @@ using System.Net.Mime;
 using System.Security.Authentication;
 using Telegram.Bot;
 using SendGrid.Extensions.DependencyInjection;
-
+using System.Globalization;
+using Texnomic.Blazor.hCaptcha.Extensions;
 
 namespace NzCovidPassTelegramBot
 {
@@ -41,6 +42,7 @@ namespace NzCovidPassTelegramBot
             var telegramConfig = Configuration.GetSection("Telegram").Get<TelegramConfiguration>();
             var botConfig = Configuration.GetSection("Bot").Get<BotConfiguration>();
             var sendgridConfig = Configuration.GetSection("SendGrid").Get<SendGridConfiguration>();
+            var hCaptchaConfig = Configuration.GetSection("hCaptcha").Get<HCaptchaConfiguration>();
 
             // Add services to the container.
             services.AddRazorPages(options =>
@@ -98,6 +100,11 @@ namespace NzCovidPassTelegramBot
             });
 
             // Other 3rd party stuff
+            services.AddHCaptcha(options =>
+            {
+                options.SiteKey = hCaptchaConfig.SiteKey;
+                options.Secret = hCaptchaConfig.Secret;
+            });
             services.AddSendGrid(options =>
             {
                 options.ApiKey = sendgridConfig.ApiKey;
@@ -117,6 +124,16 @@ namespace NzCovidPassTelegramBot
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            var cultureInfo = new CultureInfo("en-NZ");
+
+            if (cultureInfo is not null)
+            {
+                Thread.CurrentThread.CurrentCulture = cultureInfo;
+                Thread.CurrentThread.CurrentUICulture = cultureInfo;
+            }
+
+            Log.Information("Culture set to {culture}", Thread.CurrentThread.CurrentCulture.DisplayName);
+
             // Configure the HTTP request pipeline.
             if (!env.IsDevelopment())
             {
