@@ -1,0 +1,155 @@
+﻿@page "/contact"
+@using BlazorCaptcha
+@using NzCovidPassTelegramBot.Data.Email
+@using NzCovidPassTelegramBot.Services
+
+<PageTitle>Contact - Vaxxy</PageTitle>
+
+<h1>Contact</h1>
+
+<p>To get in touch, drop me a message with the contact form below.</p>
+
+<div style="max-width:500px">
+    <EditForm Model="@ContactFormModel" OnValidSubmit="@HandleValidSubmit" OnInvalidSubmit="@HandleInvalidSubmit">
+        <DataAnnotationsValidator />
+        <CustomValidation @ref="CustomValidation" />
+        <ValidationSummary />
+        <div class="mb-3">
+            <label class="form-label" for="from">
+                From
+            </label>
+            <InputText class="form-control" id="from" @bind-Value="@ContactFormModel.From" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="requestType">
+                Subject
+            </label>
+            <InputSelect class="form-select" id="requestType" @bind-Value="@ContactFormModel.Subject">
+                @foreach (var value in Enum.GetValues(typeof(ContactRequestType)))
+                {
+                    <option value="@value">@Helpers.InsertSpaceBetweenCaps(value.ToString() ?? "")</option>
+                }
+            </InputSelect>
+            </div>
+        <div class="mb-3">
+            <label class="form-label" for="message">
+                Message
+            </label>
+            <InputTextArea class="form-control" id="message" @bind-Value="@ContactFormModel.Message" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="message">
+                Captcha
+            </label>
+            <div class="captcha d-flex align-items-center">
+                <Captcha @bind-CaptchaWord="@Captcha" CharNumber="@_captchaLength" />
+                <button class="refresh btn btn-refresh ms-1" type="button" @onclick="RegenerateCaptcha"></button>
+            </div>
+            <div class="mt-1">
+                <InputText style="width:170px" class="form-control" id="captcha" aria-label="captcha" @bind-Value="@ContactFormModel.Captcha" />
+            </div>
+        </div>
+
+        <button class="btn btn-primary" type="submit" disabled="@MessageSending">Send</button>
+    </EditForm>
+</div>
+
+<div class="mt-3">
+    <ConditonalGroup When="@MessageSent">
+        <p>Message has been sent!</p>
+    </ConditonalGroup>
+    <ConditonalGroup When="@MessageFailed">
+        <p class="text-danger">Sending has failed, please try again.</p>
+</ConditonalGroup>
+</div>
+
+<Signature />
+
+@code {
+    [Inject]
+    IEmailService? EmailService { get; set; }
+    CustomValidation? CustomValidation { get; set; }
+
+    bool MessageSent { get; set; }
+    bool MessageSending { get; set; }
+    bool MessageFailed { get; set; }
+
+    string Captcha { get; set; } = "";
+    const int _captchaLength = 5;
+
+    ContactForm ContactFormModel { get; set; } = new ContactForm();
+
+    void RegenerateCaptcha()
+    {
+        Captcha = Tools.GetCaptchaWord(_captchaLength);
+    }
+
+    bool CustomValidator()
+    {
+        CustomValidation?.ClearErrors();
+
+        var errors = new Dictionary<string, List<string>>();
+
+        if (!Captcha.Equals(ContactFormModel.Captcha, StringComparison.OrdinalIgnoreCase))
+        {
+            errors.Add(nameof(ContactFormModel.Captcha),
+                new() { "Captcha is not valid, please retry" });
+        }
+
+        if (errors.Any())
+        {
+            CustomValidation?.DisplayErrors(errors);
+            RegenerateCaptcha();
+            return false;
+        }
+
+        return true;
+    }
+
+    void ClearForm()
+    {
+        ContactFormModel = new ContactForm();
+        RegenerateCaptcha();
+    }
+
+    async void HandleValidSubmit()
+    {
+        MessageFailed = false;
+        MessageSent = false;
+
+        await InvokeAsync(StateHasChanged);
+
+        if (CustomValidator())
+        {
+            MessageSending = true;
+            await InvokeAsync(StateHasChanged);
+
+            if (await EmailService!.SendContactFormEmail(ContactFormModel))
+            {
+                MessageSent = true;
+                ClearForm();
+            }
+            else
+            {
+                MessageFailed = true;
+            }
+            MessageSending = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    void HandleInvalidSubmit()
+    {
+        MessageFailed = false;
+        MessageSent = false;
+        CustomValidator();
+    }
+
+    protected override Task OnInitializedAsync()
+    {
+        RegenerateCaptcha();
+
+        return base.OnInitializedAsync();
+    }
+}

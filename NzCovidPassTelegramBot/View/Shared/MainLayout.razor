@@ -9,7 +9,7 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+            <a href="@_githubLink" target="_blank" class="d-flex align-items-center"><img class="me-1" style="width:16px;height:16px;" src="/assets/github.svg" alt="github logo" aria-hidden="true" />View on Github</a>
         </div>
 
         <article class="content px-4">
@@ -17,3 +17,17 @@
         </article>
     </main>
 </div>
+
+@code {
+    [Inject]
+    IConfiguration? Configuration { get; set; }
+
+    string _githubLink = "";
+
+    protected override Task OnInitializedAsync()
+    {
+        _githubLink = Configuration.GetValue<string>("RepositoryLink");
+
+        return base.OnInitializedAsync();
+    }
+}

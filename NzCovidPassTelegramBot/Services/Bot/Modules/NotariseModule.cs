@@ -105,12 +105,6 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
         public async Task NotariseConfirmStep(Message message)
         {
             var targetUserId = message.ForwardFrom!.Id;
-            const string notariseForwardedTemplate = @"Please confirm that you would like to notarise this user.
-
-UserId: {0}
-Username: {1}
-Pass valid from: {2}
-Pass valid to: {3}";
 
             var pass = (await _covidPassLinkerService.GetPass(targetUserId))!;
 
@@ -127,7 +121,7 @@ Pass valid to: {3}";
              });
 
             await _client.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                text: string.Format(notariseForwardedTemplate,
+                                                text: string.Format(BotText.NotariseConfirm,
                                                     targetUserId,
                                                     TimeZoneInfo.ConvertTimeFromUtc(pass.ValidFromDate, Program.NZTime).ToString("d"),
                                                     TimeZoneInfo.ConvertTimeFromUtc(pass.ValidToDate, Program.NZTime).ToString("d")),
@@ -138,13 +132,6 @@ Pass valid to: {3}";
         {
             var selfUserId = message.From!.Id;
             var targetUserId = message.ForwardFrom!.Id;
-
-            const string notariseForwardedTemplate = @"Please confirm that you would like to revoke your notarisation for this user.
-
-UserId: {0}
-Username: {1}
-Pass valid from: {2}
-Pass valid to: {3}";
 
             var pass = (await _covidPassLinkerService.GetPass(targetUserId))!;
 
@@ -161,7 +148,7 @@ Pass valid to: {3}";
              });
 
             await _client.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                text: string.Format(notariseForwardedTemplate,
+                                                text: string.Format(BotText.RevokeNotariseConfirm,
                                                     targetUserId,
                                                     TimeZoneInfo.ConvertTimeFromUtc(pass.ValidFromDate, Program.NZTime).ToString("d"),
                                                     TimeZoneInfo.ConvertTimeFromUtc(pass.ValidToDate, Program.NZTime).ToString("d")),

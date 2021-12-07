@@ -1,5 +1,6 @@
 ﻿using NzCovidPassTelegramBot.Data.Bot;
 using NzCovidPassTelegramBot.Data.CovidPass;
+using NzCovidPassTelegramBot.Data.Templates;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Text.RegularExpressions;
@@ -104,16 +105,7 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
             // Check if linked or not linked and provide link instructions
             var isUserLinked = await _covidPassLinkerService.IsUserLinked(message.From!.Id); // Link step only follows after sender is verified via message.From
 
-            const string linkInstructionString = @"{0}
-
-If you would like to link or update a NZ Covid pass, please upload an image containing the QR code from your Covid pass.
-
-The quickest way may be to take a screenshot from your mobile phone screen while the pass is open, ensuring that the QR code is clearly visible.";
-
-            const string notLinkedPreamble = "Your Telegram account is *NOT LINKED* to a Covid pass.";
-            const string linkedPreamble = "Your Telegram account is *LINKED* to a Covid pass";
-
-            var linkInstruction = string.Format(linkInstructionString, isUserLinked ? linkedPreamble : notLinkedPreamble);
+            var linkInstruction = string.Format(BotText.LinkInfo, isUserLinked ? BotText.LinkedPreamble : BotText.NotLinkedPreamble);
 
             await _client.SendTextMessageAsync(chatId: message.Chat.Id,
                 text: linkInstruction.Replace(".", "\\."),
@@ -244,17 +236,6 @@ Additional reason(s):
                 return;
             }
 
-            const string verifyPassTemplate = @"This Covid pass can be linked to your account, please check its details are correct. These details will not be saved.
-
-Given name: {0}
-Family name: {1}
-Date of birth: {2}
-Valid from: {3}
-Valid to: {4}
-
-Unique link code: `{5}`
-";
-
             // Confirm details via user
             var confirmKeyboard = new InlineKeyboardMarkup(new[]
             {
@@ -269,7 +250,7 @@ Unique link code: `{5}`
              });
 
             await _client.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                text: string.Format(verifyPassTemplate,
+                                                text: string.Format(BotText.VerifyPassInfo,
                                                     givenName,
                                                     familyName,
                                                     dob.ToString("d"),

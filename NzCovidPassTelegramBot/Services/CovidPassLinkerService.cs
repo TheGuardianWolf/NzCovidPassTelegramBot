@@ -14,6 +14,8 @@ namespace NzCovidPassTelegramBot.Services
         Task<bool> RevokeNotarisePass(long userId, long notaryId);
         Task<bool> IsPassLinked(PassIdentifier passIdentifier);
         Task<bool> IsUserLinked(long userId);
+        Task<bool> IsUserNotarised(long userId);
+        Task<IEnumerable<long>> FilterNotarisedUsers(IEnumerable<long> userIds)
     }
 
     public class CovidPassLinkerService : ICovidPassLinkerService
@@ -130,6 +132,36 @@ namespace NzCovidPassTelegramBot.Services
             var pass = await _covidPassRepository.Get(userId);
 
             return pass is not null && pass.BetweenValidDates();
+        }
+
+        public async Task<bool> IsUserNotarised(long userId)
+        {
+            var users = await _userRepository.GetAll();
+            var notaryIds = users.Where(x => x.HasClaim(Data.Bot.UserClaim.Notary)).Select(x => x.UserId);
+
+            var pass = await _covidPassRepository.Get(userId);
+
+            return pass is not null && pass.BetweenValidDates() && pass.Verifiers.Any(x => notaryIds.Contains(x));
+        }
+
+        public async Task<IEnumerable<long>> FilterNotarisedUsers(IEnumerable<long> userIds)
+        {
+            var users = await _userRepository.GetAll();
+            var notaryIds = users.Where(x => x.HasClaim(Data.Bot.UserClaim.Notary)).Select(x => x.UserId);
+
+            var filteredUserIds = new List<long>();
+            
+            foreach (var userId in userIds)
+            {
+                var pass = await _covidPassRepository.Get(userId);
+
+                if (pass is not null && pass.BetweenValidDates() && pass.Verifiers.Any(x => notaryIds.Contains(x)))
+                {
+                    filteredUserIds.Add(userId);
+                }
+            }
+
+            return filteredUserIds;
         }
     }
 }

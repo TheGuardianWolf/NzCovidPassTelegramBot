@@ -1,4 +1,5 @@
 ﻿using NzCovidPassTelegramBot.Data.Bot;
+using NzCovidPassTelegramBot.Data.Templates;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -54,15 +55,6 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
 
         public async Task Help(Message message)
         {
-            const string usageFormatString = @"This bot and service is made to link a NZ Covid Pass with your Telegram account. It can be used to share anonymous vaccine information for event organisation or otherwise. A single pass can only be attached to one telegram account.
-
-No personal data is directly stored through this service, any stored data will be in a hashed format.
-
-Please visit {0} for more details.
-
-Usage:
-
-";
             var userCommandInfo = CommandType.Info.AsEnumerable();
             if (message.From is not null) 
             {
@@ -72,7 +64,7 @@ Usage:
                 }
              }
 
-            var usage = string.Format(usageFormatString, _tgConfig.Hostname) + string.Join('\n', userCommandInfo.Select(x => $"{x.Command} - {x.Description}"));
+            var usage = string.Format(BotText.HelpInfo, _tgConfig.Hostname) + string.Join('\n', userCommandInfo.Select(x => $"{x.Command} - {x.Description}"));
 
             await _client.SendTextMessageAsync(chatId: message.Chat.Id,
                                                   text: usage,

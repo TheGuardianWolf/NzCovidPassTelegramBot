@@ -15,6 +15,7 @@ using Serilog;
 using System.Net.Mime;
 using System.Security.Authentication;
 using Telegram.Bot;
+using SendGrid.Extensions.DependencyInjection;
 
 
 namespace NzCovidPassTelegramBot
@@ -39,6 +40,7 @@ namespace NzCovidPassTelegramBot
             var dataInstanceName = Configuration["DataInstanceName"];
             var telegramConfig = Configuration.GetSection("Telegram").Get<TelegramConfiguration>();
             var botConfig = Configuration.GetSection("Bot").Get<BotConfiguration>();
+            var sendgridConfig = Configuration.GetSection("SendGrid").Get<SendGridConfiguration>();
 
             // Add services to the container.
             services.AddRazorPages(options =>
@@ -58,6 +60,7 @@ namespace NzCovidPassTelegramBot
             services.AddScoped<ICovidPassLinkerService, CovidPassLinkerService>();
             services.AddScoped<ICovidPassPollService, CovidPassPollService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IEmailService, EmailService>();
 
             // Caching solution for polls and passes
             var redisConfig = Configuration.GetConnectionString("Redis");
@@ -95,6 +98,10 @@ namespace NzCovidPassTelegramBot
             });
 
             // Other 3rd party stuff
+            services.AddSendGrid(options =>
+            {
+                options.ApiKey = sendgridConfig.ApiKey;
+            });
             services.AddNzCovidPassVerifier();
             services.AddMemoryCache(); // Needed for covid pass
             services.AddHttpClient("tgwebhook")

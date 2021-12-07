@@ -64,7 +64,11 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
         public async Task<IEnumerable<InlineQueryResult>> BotOnInlineQueryReceived(InlineQuery inlineQuery)
         {
             var text = new InputTextMessageContent(
-                        string.Format(BotText.CovidPassCheck, DateTime.UtcNow.ToString("d"), inlineQuery.From.Username, _tgConfig.BotUsername, "No valid responses").Replace(".", "\\.").Replace("-", "\\-")
+                        string.Format(BotText.CovidPassCheck,
+                        TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Program.NZTime).ToString("d"),
+                        inlineQuery.From.Username, 
+                        _tgConfig.BotUsername, 
+                        "No valid responses").Replace(".", "\\.").Replace("-", "\\-")
                     );
             text.ParseMode = ParseMode.MarkdownV2;
             var response = new InlineQueryResultArticle(
@@ -120,7 +124,9 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
                 }
              });
 
-            var participantsListString = string.Join(", ", pollInfo.Participants.Select(x => $"@{x.Username}".Replace("_", "\\_")));
+            var notarisedParticipantIds = await _covidPassLinkerService.FilterNotarisedUsers(pollInfo.Participants.Select(x => x.Id));
+
+            var participantsListString = string.Join(", ", pollInfo.Participants.Select(x => $"@{x.Username}{(notarisedParticipantIds.Contains(x.Id) ? " ✔" : "")}".Replace("_", "\\_")));
 
             if (!pollInfo.Participants.Any())
             {
@@ -131,7 +137,7 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
                 inlineMessageId: pollInfo.InlineMessageId,
                 text: string.Format(
                     BotText.CovidPassCheck,
-                    pollInfo.CreationDate.ToString("d"),
+                    TimeZoneInfo.ConvertTimeFromUtc(pollInfo.CreationDate, Program.NZTime).ToString("d"),
                     pollInfo.Creator.Username,
                     _tgConfig.BotUsername,
                     participantsListString
@@ -154,13 +160,6 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
 
         public async Task Check(Message message)
         {
-            // Send convert to inline, then proceed with inline options
-            const string checkTemplate = @"Click the button below to request a group or user's vaccine pass link status\(es\).
-
-This bot can be called inline with `@{0}` in any private or group chats to initiate a poll.
-
-This will prompt users to volunteer their Covid pass statuses.";
-
             var confirmKeyboard = new InlineKeyboardMarkup(new[]
             {
                 new []
@@ -170,7 +169,7 @@ This will prompt users to volunteer their Covid pass statuses.";
              });
 
             await _client.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                text: string.Format(checkTemplate,
+                                                text: string.Format(BotText.CheckInfo,
                                                     _tgConfig.BotUsername).Replace(".", "\\."),
                                                 parseMode: ParseMode.MarkdownV2,
                                                 replyMarkup: confirmKeyboard);
@@ -197,7 +196,7 @@ This will prompt users to volunteer their Covid pass statuses.";
             if (isUserLinked)
             {
                 // Create check existing poll
-                var poll = _covidPassPollService.GetPoll(callbackQuery.InlineMessageId);
+                var poll = await _covidPassPollService.GetPoll(callbackQuery.InlineMessageId);
 
                 if (poll is null)
                 {
@@ -205,19 +204,24 @@ This will prompt users to volunteer their Covid pass statuses.";
                     return;
                 }
 
-                var updatedPoll = await _covidPassPollService.AddParticipantToPoll(callbackQuery.InlineMessageId, callbackQuery.From.Id, callbackQuery.From.Username ?? "");
-
-                if (updatedPoll is null)
+                var userId = callbackQuery.From.Id;
+                var username = callbackQuery.From.Username ?? "";
+                if (!poll.Participants.Any(x => x.Id == userId && x.Username == username))
                 {
-                    await FailedCheckIn(_client, callbackQuery);
-                    return;
+                    var updatedPoll = await _covidPassPollService.AddParticipantToPoll(callbackQuery.InlineMessageId, callbackQuery.From.Id, callbackQuery.From.Username ?? "");
+
+                    if (updatedPoll is null)
+                    {
+                        await FailedCheckIn(_client, callbackQuery);
+                        return;
+                    }
+
+                    await SyncPassPollInfoWithMessage(updatedPoll);
                 }
 
                 await _client.AnswerCallbackQueryAsync(
                     callbackQueryId: callbackQuery.Id,
                     text: "You have checked in!");
-
-                await SyncPassPollInfoWithMessage(updatedPoll);
             }
             else
             {
