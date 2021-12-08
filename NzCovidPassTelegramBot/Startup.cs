@@ -67,7 +67,7 @@ namespace NzCovidPassTelegramBot
             // Caching solution for polls and passes
             var redisConfig = Configuration.GetConnectionString("Redis");
             var cosmosConfig = Configuration.GetConnectionString("Cosmos");
-            
+
             if (!string.IsNullOrEmpty(redisConfig))
             {
                 services.AddStackExchangeRedisCache(options =>
@@ -128,6 +128,8 @@ namespace NzCovidPassTelegramBot
 
             if (cultureInfo is not null)
             {
+                CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+                CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
                 Thread.CurrentThread.CurrentCulture = cultureInfo;
                 Thread.CurrentThread.CurrentUICulture = cultureInfo;
             }
