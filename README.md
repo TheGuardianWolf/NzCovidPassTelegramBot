@@ -1,9 +1,28 @@
-# NZ Covid Pass Linker Bot
+# NZ Covid Pass Linker Bot (VaxxyBot)
 
-This is a telegram bot made to store and verify a user' self submitted COVID vaccination status. It uses the COVID pass as the main proof of vaccination.
+This is a system made to store and verify a user's self submitted COVID vaccination status.
 
-COVID passes when created are stored in the Ministry of Health's systems. To verify it, the MoH issues a digital signature that takes the form of a QR code. If a QR code is submitted to this bot, it is verified via the MoH system and if valid, will mark the submitting Telegram account as valid (with an expiry date). Only one Telegram account can have one unique pass at any given time.
+It is currently running as a Telegram bot in the trial phase, suitable for hosting private events or
+keeping a small register.
 
-No sensitive information will be directly stored by this service at the current time, hashes will be used in all places where it can. In the future (if there is the need), the bot may explicitly ask for further data that may identify you. During verification, your pass will transit through this server, but the data is not kept.
+More information on this bot service can be found under
+[https://vaxxy.pixelcollider.net](https://vaxxy.pixelcollider.net) or
+[@VaxxyBot](https://t.me/VaxxyBot) on Telegram.
 
-This service and website is running under the ownership of [@TheGuardianWolf](https://t.me/theguardianwolf).
+The key goal is to smooth the process of COVID pass verification by obfuscating the identifying
+information where it is not needed, and encouraging single checks for a pass' lifetime in cases
+where additional ID checks are required.
+
+It uses a privacy focused approach that relies on the digital signature from the pass and human
+notaries for a full level of confirmation. This approach acknowledges the potential flaws in a
+digital system in identifying stolen or forged passes, and supplimenting it with manual checks,
+allowing for a greater sense of community trust in the technology.
+
+Manual entries and a system for exceptions are currently being worked on.
+
+This service and website is running under the ownership of
+[@TheGuardianWolf](https://t.me/theguardianwolf).
+
+An aside: Ultimately, the problem of COVID is a social one once it is under control, and we must
+choose how we protect ourselves, and how we trust others to protect us through vaccinations and
+other public health measures.
