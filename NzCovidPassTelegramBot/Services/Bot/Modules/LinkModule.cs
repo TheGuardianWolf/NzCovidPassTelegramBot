@@ -3,6 +3,7 @@ using NzCovidPassTelegramBot.Data.CovidPass;
 using NzCovidPassTelegramBot.Data.Templates;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using System.Text.RegularExpressions;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -143,9 +144,12 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
             try
             {
                 var barcodeReader = new ZXing.ImageSharp.BarcodeReader<Rgba32>();
+                barcodeReader.TryInverted = true;
+                barcodeReader.Options.TryHarder = true;
+                barcodeReader.Options.PossibleFormats = new List<BarcodeFormat> { BarcodeFormat.QR_CODE };
 
-                using var rawImage = Image.Load(pixelArray, out var rawImageFormat);
-                using var photoBitmap = rawImage?.CloneAs<Rgba32>();
+                using var photoBitmap = Image.Load<Rgba32>(pixelArray, out var rawImageFormat);
+                photoBitmap.Mutate(op => op.GaussianSharpen());
 
                 if (photoBitmap is null)
                 {
@@ -164,6 +168,7 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
 
             if (qrCode is null || string.IsNullOrWhiteSpace(qrCode.Text))
             {
+                _logger.LogError("Barcode detection failed as qrCode is missing or data could not be extracted for {userId}", message.From!.Id);
                 await FailedToScanAction(_client, message);
                 return;
             }
