@@ -55,7 +55,7 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
                         return true;
                 };
             }
-            else if (message.Type == MessageType.Photo)
+            else if (message.Type == MessageType.Photo || message.Type == MessageType.Document)
             {
                 return await LinkPhoto(message);
             }
@@ -125,7 +125,16 @@ namespace NzCovidPassTelegramBot.Services.Bot.Modules
             }
 
             // Grab the photo with a width smaller than or equal to 2000 to keep processing times low
-            var photoId = message.Photo!.LastOrDefault(x => x.Width <= 2000)?.FileId;
+            var photoId = message.Photo?.LastOrDefault(x => x.Width <= 2000)?.FileId;
+
+            if (photoId is null)
+            {
+                // Try looking at document to see if it has stuff
+                if (!((message.Document?.FileSize ?? int.MaxValue) > 20000000))
+                {
+                    photoId = message.Document?.FileId;
+                }
+            }
 
             if (photoId is null)
             {
